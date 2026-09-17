@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Biodata Saya</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f2f4f7;
+            color: #333;
+        }
+
+        header {
+            background-color: #2563eb;
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 18px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .profile {
+            text-align: center;
+        }
+
+        .profile img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #2563eb;
+            margin-bottom: 15px;
+        }
+
+        .profile h2 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        .biodata {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .biodata td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .biodata td:first-child {
+            font-weight: bold;
+            width: 35%;
+            color: #2563eb;
+        }
+
+        .skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .skill {
+            background-color: #2563eb;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        footer {
+            text-align: center;
+            background-color: #1e293b;
+            color: white;
+            padding: 20px;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+        <h1>Biodata Saya</h1>
+        <p>Selamat datang di halaman biodata pribadi saya</p>
+    </header>
+
+    <div class="container">
+
+        <!-- Profil -->
+        <div class="card profile">
+            <img src="foto.jpg" alt="Foto Profil">
+
+            <h2>Nama Lengkap Anda</h2>
+            <p>Mahasiswa / Pelajar</p>
+        </div>
+
+        <!-- Biodata -->
+        <div class="card">
+            <h2>Data Diri</h2>
+
+            <table class="biodata">
+                <tr>
+                    <td>Nama Lengkap</td>
+                    <td>Nama Lengkap Anda</td>
+                </tr>
+
+                <tr>
+                    <td>NIM</td>
+                    <td>123456789</td>
+                </tr>
+
+                <tr>
+                    <td>Tempat, Tanggal Lahir</td>
+                    <td>Salatiga, 01 Januari 2000</td>
+                </tr>
+
+                <tr>
+                    <td>Jenis Kelamin</td>
+                    <td>Laki-laki</td>
+                </tr>
+
+                <tr>
+                    <td>Alamat</td>
+                    <td>Salatiga, Jawa Tengah</td>
+                </tr>
+
+                <tr>
+                    <td>Email</td>
+                    <td>emailanda@gmail.com</td>
+                </tr>
+
+                <tr>
+                    <td>No. Telepon</td>
+                    <td>08xxxxxxxxxx</td>
+                </tr>
+
+                <tr>
+                    <td>Program Studi</td>
+                    <td>Teknik Informatika</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Tentang Saya -->
+        <div class="card">
+            <h2>Tentang Saya</h2>
+
+            <p style="margin-top: 15px; line-height: 1.8;">
+                Halo, nama saya <b>Nama Anda</b>. Saya adalah seorang mahasiswa
+                yang memiliki ketertarikan terhadap teknologi informasi,
+                pemrograman, dan pengembangan website. Saya senang mempelajari
+                hal-hal baru dan mengembangkan kemampuan di bidang teknologi.
+            </p>
+        </div>
+
+        <!-- Keahlian -->
+        <div class="card">
+            <h2>Keahlian</h2>
+
+            <div class="skills">
+                <span class="skill">HTML</span>
+                <span class="skill">CSS</span>
+                <span class="skill">JavaScript</span>
+                <span class="skill">PHP</span>
+                <span class="skill">Database</span>
+            </div>
+        </div>
+
+        <!-- Hobi -->
+        <div class="card">
+            <h2>Hobi</h2>
+
+            <ul style="margin-top: 15px; margin-left: 20px; line-height: 2;">
+                <li>Membaca</li>
+                <li>Menonton film</li>
+                <li>Belajar teknologi</li>
+                <li>Bermain komputer</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Nama Anda. Semua Hak Dilindungi.</p>
+    </footer>
+
+</body>
+</html>
