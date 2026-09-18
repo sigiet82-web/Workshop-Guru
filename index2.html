@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulasi Fisika — Newton's Laws & Velocity-Dependent Forces</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: '#0f2747',
+            science: '#1677b8',
+            mint: '#19a974',
+            orange: '#f59e0b'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #eef3f8; }
+    .card { background:white; border:1px solid #dbe4ee; border-radius:18px; box-shadow:0 5px 18px rgba(15,39,71,.07); }
+    canvas { max-width:100%; }
+    .tab.active { background:#0f2747; color:white; }
+    .formula { font-family: "Times New Roman", serif; }
+    input[type=range] { accent-color:#1677b8; }
+    .answer { display:none; }
+    .answer.show { display:block; }
+  </style>
+</head>
+<body class="text-slate-800">
+<header class="bg-navy text-white">
+  <div class="max-w-7xl mx-auto px-5 py-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>
+        <p class="text-sky-300 text-sm font-semibold tracking-wider uppercase">Laboratorium Fisika • Simulasi Interaktif</p>
+        <h1 class="text-2xl md:text-3xl font-bold mt-1">Newton’s Laws and Velocity-Dependent Forces</h1>
+        <p class="text-slate-300 mt-1">Gaya hambat linier, kuadratik, kecepatan terminal, dan asimetri percepatan bola memantul.</p>
+      </div>
+      <div class="text-sm bg-white/10 rounded-xl px-4 py-3">
+        <b>Model:</b> gravitasi + drag<br><span class="text-slate-300">m dv/dt = mg − c₁v − c₂v² (arah bawah +)</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto p-4 md:p-6">
+  <div class="flex flex-wrap gap-2 mb-5">
+    <button class="tab active px-4 py-2 rounded-xl font-semibold" onclick="showTab('sim')">Simulasi</button>
+    <button class="tab px-4 py-2 rounded-xl font-semibold bg-white" onclick="showTab('quiz')">Pra-test & Post-test</button>
+    <button class="tab px-4 py-2 rounded-xl font-semibold bg-white" onclick="showTab('units')">Persamaan & Satuan</button>
+  </div>
+
+  <section id="sim">
+    <div class="grid lg:grid-cols-12 gap-5">
+      <aside class="lg:col-span-3 card p-5 h-fit">
+        <h2 class="font-bold text-lg text-navy mb-4">Parameter Simulasi</h2>
+        <div class="space-y-5">
+          <label class="block">
+            <div class="flex justify-between text-sm"><span>Massa, m</span><b id="mVal">1.00 kg</b></div>
+            <input id="m" type="range" min=".05" max="5" step=".05" value="1" class="w-full">
+          </label>
+          <label class="block">
+            <div class="flex justify-between text-sm"><span>Gravitasi, g</span><b id="gVal">9.81 m/s²</b></div>
+            <input id="g" type="range" min="1" max="20" step=".01" value="9.81" class="w-full">
+          </label>
+          <label class="block">
+            <div class="flex justify-between text-sm"><span>Hambatan linier, c₁</span><b id="c1Val">0.20 kg/s</b></div>
+            <input id="c1" type="range" min="0" max="1" step=".01" value=".2" class="w-full">
+          </label>
+          <label class="block">
+            <div class="flex justify-between text-sm"><span>Hambatan kuadratik, c₂</span><b id="c2Val">0.05 kg/m</b></div>
+            <input id="c2" type="range" min="0" max=".5" step=".01" value=".05" class="w-full">
+          </label>
+          <label class="block">
+            <div class="flex justify-between text-sm"><span>Ketinggian awal</span><b id="hVal">100 m</b></div>
+            <input id="h" type="range" min="20" max="300" step="5" value="100" class="w-full">
+          </label>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="play()" class="bg-mint text-white rounded-xl py-2 font-semibold">▶ Play</button>
+            <button onclick="pause()" class="bg-slate-200 rounded-xl py-2 font-semibold">Ⅱ Pause</button>
+            <button onclick="reset()" class="bg-orange text-white rounded-xl py-2 font-semibold">↻ Reset</button>
+            <button onclick="step()" class="bg-science text-white rounded-xl py-2 font-semibold">Step</button>
+          </div>
+          <div class="space-y-2 text-sm border-t pt-4">
+            <label class="flex items-center justify-between">Kurva vakum <input id="vacuum" type="checkbox" checked></label>
+            <label class="flex items-center justify-between">Vektor gaya <input id="vectors" type="checkbox" checked></label>
+            <label class="flex items-center justify-between">Bounce mode <input id="bounce" type="checkbox"></label>
+          </div>
+          <div class="rounded-xl bg-sky-50 p-3 text-sm">
+            <b>Kecepatan terminal</b>
+            <div class="formula text-xl mt-1">v<sub>t</sub> = (−c₁ + √(c₁² + 4c₂mg))/(2c₂)</div>
+            <div id="vtDisplay" class="font-bold text-science mt-1"></div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="lg:col-span-5 space-y-5">
+        <div class="card p-4">
+          <div class="flex justify-between items-center mb-2">
+            <h2 class="font-bold text-lg text-navy">Animasi Benda Jatuh</h2>
+            <span id="state" class="text-xs bg-slate-100 px-3 py-1 rounded-full">Standby</span>
+          </div>
+          <canvas id="fallCanvas" width="620" height="440" class="w-full rounded-xl bg-slate-50"></canvas>
+          <div class="grid grid-cols-3 gap-2 mt-3 text-center text-sm">
+            <div class="bg-slate-50 rounded-xl p-2"><span class="text-slate-500">t</span><b id="tRead" class="block">0.00 s</b></div>
+            <div class="bg-slate-50 rounded-xl p-2"><span class="text-slate-500">v</span><b id="vRead" class="block">0.00 m/s</b></div>
+            <div class="bg-slate-50 rounded-xl p-2"><span class="text-slate-500">a</span><b id="aRead" class="block">0.00 m/s²</b></div>
+          </div>
+        </div>
+
+        <div class="card p-4">
+          <h2 class="font-bold text-lg text-navy mb-2">Free-Body Diagram Dinamis</h2>
+          <canvas id="fbdCanvas" width="620" height="250" class="w-full rounded-xl bg-slate-50"></canvas>
+          <p id="fbdText" class="text-sm text-slate-600 mt-2"></p>
+        </div>
+      </div>
+
+      <div class="lg:col-span-4 space-y-5">
+        <div class="card p-4">
+          <h2 class="font-bold text-lg text-navy mb-2">Grafik Kecepatan v(t)</h2>
+          <canvas id="vChart"></canvas>
+        </div>
+        <div class="card p-4">
+          <h2 class="font-bold text-lg text-navy mb-2">Grafik Percepatan a(t)</h2>
+          <canvas id="aChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 mt-5">
+      <div class="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+        <div>
+          <h2 class="font-bold text-lg text-navy">Modul 2 — Bola Memantul & Asimetri Percepatan</h2>
+          <p class="text-sm text-slate-600">Kelajuan sesaat sebelum dan sesudah pantulan dibuat sama. Arah bawah adalah positif.</p>
+        </div>
+        <button onclick="simulateBounce()" class="bg-navy text-white px-4 py-2 rounded-xl font-semibold">Simulasikan Pantulan</button>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mt-4">
+        <div class="border rounded-2xl p-4">
+          <h3 class="font-bold">Sesaat sebelum menyentuh tanah</h3>
+          <canvas id="beforeCanvas" width="500" height="220"></canvas>
+          <div id="beforeInfo" class="text-sm"></div>
+        </div>
+        <div class="border rounded-2xl p-4">
+          <h3 class="font-bold">Sesaat setelah meninggalkan tanah</h3>
+          <canvas id="afterCanvas" width="500" height="220"></canvas>
+          <div id="afterInfo" class="text-sm"></div>
+        </div>
+      </div>
+      <div class="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+        <b>Concept Check</b>
+        <p class="mt-1">“Percepatan sama karena kelajuannya sama.”</p>
+        <div class="flex gap-2 mt-2">
+          <button onclick="checkConcept(false)" class="px-4 py-2 rounded-xl bg-slate-200">Agree</button>
+          <button onclick="checkConcept(true)" class="px-4 py-2 rounded-xl bg-science text-white">Disagree</button>
+        </div>
+        <div id="conceptResult" class="mt-3 text-sm"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quiz" class="hidden">
+    <div class="grid lg:grid-cols-2 gap-5">
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-navy">Pra-test (Pre-test)</h2>
+        <p class="text-sm text-slate-600 mb-4">Waktu 10–15 menit. Kerjakan berdasarkan pemahaman awal.</p>
+        <div class="space-y-5 text-sm">
+          <div><b>1.</b> Bola dijatuhkan dari keadaan diam dan mencapai kecepatan terminal pada t = t₀. Jelaskan/gambarkan FBD pada t = 0 dan t = t₀ serta bandingkan percepatannya.</div>
+          <div><b>2.</b> Sketsakan grafik v terhadap t untuk benda jatuh dengan hambatan udara hingga melewati t₀.</div>
+          <div><b>3.</b> Jika benda dilempar ke atas, ke mana arah gaya hambat udara? Bagaimana saat benda bergerak ke bawah?</div>
+          <textarea class="w-full border rounded-xl p-3 h-28" placeholder="Catatan jawaban siswa..."></textarea>
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-navy">Post-test</h2>
+        <p class="text-sm text-slate-600 mb-4">Waktu 20–25 menit. Jawab dengan alasan dan persamaan matematis.</p>
+        <div class="space-y-5 text-sm">
+          <div>
+            <b>1. FBD bola memantul.</b> Gambarkan keadaan sesaat sebelum menyentuh lantai dan sesaat setelah meninggalkan lantai.
+            <textarea class="w-full border rounded-xl p-3 h-20 mt-2" placeholder="Jawaban..."></textarea>
+          </div>
+          <div>
+            <b>2. Perbandingan percepatan.</b> Pada keadaan mana besar percepatan lebih besar? Jelaskan berdasarkan gaya neto.
+            <textarea class="w-full border rounded-xl p-3 h-20 mt-2" placeholder="Jawaban..."></textarea>
+          </div>
+          <div>
+            <b>3. Evaluasi pernyataan.</b> “Karena kelajuan sama, gaya hambat sama, sehingga gaya total dan percepatan sama.” Setuju/tidak? Jelaskan kesalahannya.
+            <textarea class="w-full border rounded-xl p-3 h-20 mt-2" placeholder="Jawaban..."></textarea>
+          </div>
+          <div>
+            <b>4. Persamaan gerak.</b> Tuliskan persamaan saat v &gt; 0 dan v &lt; 0 dengan c₁ dan c₂.
+            <textarea class="w-full border rounded-xl p-3 h-20 mt-2" placeholder="Jawaban..."></textarea>
+          </div>
+          <div>
+            <b>5. Kecepatan terminal.</b> Untuk c₂ = 0, turunkan vₜ = mg/c₁ dan buktikan satuannya m/s.
+            <textarea class="w-full border rounded-xl p-3 h-20 mt-2" placeholder="Jawaban..."></textarea>
+          </div>
+          <button onclick="toggleAnswers()" class="bg-navy text-white px-4 py-2 rounded-xl">Tampilkan/Sembunyikan Kunci</button>
+          <div id="answers" class="answer bg-slate-50 rounded-xl p-4">
+            <b>Kunci ringkas:</b>
+            <ol class="list-decimal ml-5 mt-2 space-y-2">
+              <li>Sebelum menyentuh tanah: mg ke bawah, drag ke atas. Setelah meninggalkan tanah: mg dan drag sama-sama ke bawah.</li>
+              <li>Sesaat setelah meninggalkan tanah: |a| &gt; g; saat jatuh |a| &lt; g karena drag berlawanan dengan gerak.</li>
+              <li>Tidak setuju: besar drag dapat sama, tetapi arahnya berbeda sehingga net force berbeda.</li>
+              <li>v &gt; 0: m dv/dt = mg − c₁v − c₂v². v &lt; 0: m dv/dt = mg + c₁|v| + c₂v².</li>
+              <li>c₂ = 0 dan terminal: 0 = mg − c₁vₜ → vₜ = mg/c₁; [c₁] = kg/s sehingga [vₜ] = m/s.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="units" class="hidden">
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-navy">Persamaan Gerak Dinamis</h2>
+        <div class="formula text-xl mt-4 space-y-4">
+          <div>v &gt; 0: &nbsp; m dv/dt = mg − c₁v − c₂v²</div>
+          <div>v &lt; 0: &nbsp; m dv/dt = mg + c₁|v| + c₂v²</div>
+        </div>
+        <p class="text-sm text-slate-600 mt-4">Dengan arah bawah sebagai positif, gaya hambat selalu berlawanan arah dengan kecepatan.</p>
+      </div>
+      <div class="card p-5">
+        <h2 class="text-xl font-bold text-navy">Analisis Satuan</h2>
+        <div class="space-y-4 mt-4 text-sm">
+          <div class="bg-slate-50 rounded-xl p-4"><b>Koefisien linier</b><br>[c₁] = [F]/[v] = (kg·m/s²)/(m/s) = <b>kg/s</b></div>
+          <div class="bg-slate-50 rounded-xl p-4"><b>Kecepatan terminal, c₂ = 0</b><br>vₜ = mg/c₁<br>[vₜ] = kg·(m/s²)/(kg/s) = <b>m/s</b></div>
+          <div class="bg-slate-50 rounded-xl p-4"><b>Koefisien kuadratik</b><br>[c₂] = [F]/[v²] = <b>kg/m</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="max-w-7xl mx-auto px-5 pb-8 pt-2 text-xs text-slate-500">
+  Simulasi edukatif. Model numerik menggunakan integrasi Euler sederhana untuk visualisasi konseptual.
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const fall = $('fallCanvas'), fctx = fall.getContext('2d');
+const fbd = $('fbdCanvas'), xctx = fbd.getContext('2d');
+let params = {m:1,g:9.81,c1:.2,c2:.05,h:100};
+let sim = {t:0,y:0,v:0,running:false,dt:.02,history:[]};
+
+function readParams(){
+  params.m=+$('m').value; params.g=+$('g').value; params.c1=+$('c1').value; params.c2=+$('c2').value; params.h=+$('h').value;
+  $('mVal').textContent=params.m.toFixed(2)+' kg'; $('gVal').textContent=params.g.toFixed(2)+' m/s²';
+  $('c1Val').textContent=params.c1.toFixed(2)+' kg/s'; $('c2Val').textContent=params.c2.toFixed(2)+' kg/m'; $('hVal').textContent=params.h.toFixed(0)+' m';
+  updateVT();
+}
+['m','g','c1','c2','h'].forEach(id=>$(id).addEventListener('input',()=>{readParams(); if(!sim.running) reset(false);}));
+
+function terminal(){
+  const {m,g,c1,c2}=params;
+  if(c2===0) return c1===0 ? Infinity : m*g/c1;
+  return (-c1+Math.sqrt(c1*c1+4*c2*m*g))/(2*c2);
+}
+function updateVT(){
+  const vt=terminal();
+  $('vtDisplay').textContent = isFinite(vt) ? 'vₜ ≈ '+vt.toFixed(2)+' m/s' : 'vₜ → tidak terbatas (tanpa hambatan)';
+}
+function acceleration(v){
+  const {m,g,c1,c2}=params;
+  return (m*g - c1*v - c2*v*Math.abs(v))/m;
+}
+function reset(charts=true){
+  sim.t=0; sim.y=0; sim.v=0; sim.running=false; sim.history=[{t:0,v:0,a:params.g}];
+  $('state').textContent='Standby'; drawFall(); drawFBD();
+  if(charts) updateCharts();
+}
+function play(){sim.running=true; $('state').textContent='Playing';}
+function pause(){sim.running=false; $('state').textContent='Paused';}
+function step(){sim.running=false; integrate(.10); updateCharts(); drawFall(); drawFBD();}
+function integrate(dt){
+  const a=acceleration(sim.v);
+  sim.v += a*dt; sim.y += sim.v*dt; sim.t += dt;
+  if(sim.y>=params.h){sim.y=params.h; sim.v=0; sim.running=false; $('state').textContent='Mencapai tanah';}
+  sim.history.push({t:sim.t,v:sim.v,a:acceleration(sim.v)});
+  if(sim.history.length>900) sim.history.shift();
+}
+function loop(){
+  if(sim.running){ for(let i=0;i<3;i++) integrate(sim.dt); updateReadouts(); drawFall(); drawFBD(); updateCharts(false); }
+  requestAnimationFrame(loop);
+}
+function updateReadouts(){
+  $('tRead').textContent=sim.t.toFixed(2)+' s'; $('vRead').textContent=sim.v.toFixed(2)+' m/s'; $('aRead').textContent=acceleration(sim.v).toFixed(2)+' m/s²';
+}
+function arrow(ctx,x1,y1,x2,y2,label,color){
+  ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  const ang=Math.atan2(y2-y1,x2-x1), s=12;
+  ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-s*Math.cos(ang-.5),y2-s*Math.sin(ang-.5));ctx.lineTo(x2-s*Math.cos(ang+.5),y2-s*Math.sin(ang+.5));ctx.closePath();ctx.fill();
+  ctx.font='bold 15px Arial';ctx.fillText(label,(x1+x2)/2+8,(y1+y2)/2);
+}
+function drawFall(){
+  const w=fall.width,h=fall.height; fctx.clearRect(0,0,w,h);
+  fctx.fillStyle='#e9f0f6';fctx.fillRect(0,0,w,h);
+  const ground=h-45; fctx.fillStyle='#64748b';fctx.fillRect(0,ground,w,45);
+  fctx.fillStyle='#0f2747'; fctx.font='bold 16px Arial'; fctx.fillText('Ketinggian: '+params.h.toFixed(0)+' m',20,28);
+  const usable=ground-55; const yy=55+(sim.y/params.h)*usable;
+  fctx.fillStyle='#1677b8'; fctx.beginPath();fctx.arc(w/2,yy,20,0,Math.PI*2);fctx.fill();
+  fctx.fillStyle='white';fctx.font='bold 12px Arial';fctx.fillText('m',w/2-4,yy+4);
+  fctx.fillStyle='#334155';fctx.font='13px Arial';fctx.fillText('y = '+(params.h-sim.y).toFixed(1)+' m di atas tanah',20,ground+25);
+  if($('vectors').checked) drawFBD();
+}
+function drawFBD(){
+  const w=fbd.width,h=fbd.height; xctx.clearRect(0,0,w,h); xctx.fillStyle='#f8fafc';xctx.fillRect(0,0,w,h);
+  const cx=w/2,cy=125; xctx.fillStyle='#1677b8';xctx.beginPath();xctx.arc(cx,cy,24,0,Math.PI*2);xctx.fill();
+  const a=Math.abs(acceleration(sim.v)); const drag=params.c1*Math.abs(sim.v)+params.c2*sim.v*sim.v;
+  const scale=1.1;
+  arrow(xctx,cx,cy+20,cx,cy+20+Math.min(75,params.m*params.g*scale),'W = mg','#f59e0b');
+  if(drag>0.001) arrow(xctx,cx,cy-20,cx,cy-20-Math.min(75,drag*scale),'Fdrag = '+drag.toFixed(2)+' N','#19a974');
+  xctx.fillStyle='#334155';xctx.font='13px Arial';xctx.fillText('a = '+acceleration(sim.v).toFixed(2)+' m/s²',20,25);
+  $('fbdText').textContent = sim.v>=0 ? 'Benda bergerak turun: drag ke atas, sehingga Fnet = mg − Fdrag.' : 'Benda bergerak naik: drag ke bawah, searah gravitasi.';
+}
+let vChart,aChart;
+function makeCharts(){
+  const labels=[], vd=[], va=[], ad=[];
+  for(let t=0,v=0;t<=10;t+=.1){
+    const a=acceleration(v); v+=a*.1; labels.push(t.toFixed(1)); vd.push(v); va.push(params.g*t); ad.push(acceleration(v));
+  }
+  vChart=new Chart($('vChart'),{type:'line',data:{labels,datasets:[
+    {label:'v(t) dengan hambatan',data:vd,borderWidth:2,pointRadius:0},
+    {label:'v ideal = g·t',data:va,borderWidth:2,borderDash:[6,5],pointRadius:0}
+  ]},options:{responsive:true,animation:false,scales:{x:{title:{display:true,text:'t (s)'}},y:{title:{display:true,text:'v (m/s)'}}}}});
+  aChart=new Chart($('aChart'),{type:'line',data:{labels,datasets:[{label:'a(t)',data:ad,borderWidth:2,pointRadius:0}]},options:{responsive:true,animation:false,scales:{x:{title:{display:true,text:'t (s)'}},y:{title:{display:true,text:'a (m/s²)'}}}}});
+}
+function updateCharts(redraw=true){
+  if(!vChart)return;
+  const labels=sim.history.map(p=>p.t.toFixed(1)), vals=sim.history.map(p=>p.v), acc=sim.history.map(p=>p.a);
+  vChart.data.labels=labels; vChart.data.datasets[0].data=vals;
+  vChart.data.datasets[1].data=$('vacuum').checked ? labels.map(x=>params.g*+x) : [];
+  aChart.data.labels=labels; aChart.data.datasets[0].data=acc;
+  if(redraw){vChart.update();aChart.update();} else {vChart.update('none');aChart.update('none');}
+}
+$('vacuum').addEventListener('change',()=>updateCharts());
+$('vectors').addEventListener('change',drawFBD);
+
+function drawBounce(ctx,up,drag){
+  ctx.clearRect(0,0,500,220); ctx.fillStyle='#f1f5f9';ctx.fillRect(0,0,500,220);
+  ctx.fillStyle='#64748b';ctx.fillRect(0,180,500,40);
+  ctx.fillStyle='#1677b8';ctx.beginPath();ctx.arc(250,110,22,0,Math.PI*2);ctx.fill();
+  arrow(ctx,250,88,250,145,'W = mg','#f59e0b');
+  if(drag>0) arrow(ctx,250,132,250,up?80:160,'Fdrag','#19a974');
+}
+function simulateBounce(){
+  const speed=Math.max(1,Math.min(terminal()*0.8,20));
+  const drag=params.c1*speed+params.c2*speed*speed;
+  const abefore=(params.m*params.g-drag)/params.m;
+  const aafter=(params.m*params.g+drag)/params.m;
+  drawBounce($('beforeCanvas').getContext('2d'),false,drag);
+  drawBounce($('afterCanvas').getContext('2d'),true,drag);
+  $('beforeInfo').innerHTML='<b>|v| = '+speed.toFixed(2)+' m/s</b><br>Fdrag = '+drag.toFixed(2)+' N ke atas<br>a sebelum = '+abefore.toFixed(2)+' m/s² (lebih kecil dari g)';
+  $('afterInfo').innerHTML='<b>|v| = '+speed.toFixed(2)+' m/s</b><br>Fdrag = '+drag.toFixed(2)+' N ke bawah<br>a setelah = '+aafter.toFixed(2)+' m/s² (lebih besar dari g)';
+}
+function checkConcept(disagree){
+  $('conceptResult').innerHTML = disagree
+    ? '<span class="text-green-700 font-semibold">Benar.</span> Kelajuan sama dapat membuat besar Fdrag sama, tetapi arah drag berlawanan pada gerak turun dan naik. Karena itu gaya neto dan percepatan berbeda.'
+    : '<span class="text-red-700 font-semibold">Perlu diperbaiki.</span> Kesamaan kelajuan tidak berarti gaya neto dan percepatan sama, karena arah gaya hambat berubah ketika arah gerak berubah.';
+}
+function toggleAnswers(){$('answers').classList.toggle('show');}
+function showTab(id){
+  ['sim','quiz','units'].forEach(x=>$(x).classList.toggle('hidden',x!==id));
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['sim','quiz','units'][i]===id));
+  document.querySelectorAll('.tab').forEach((b,i)=>{if(i!==['sim','quiz','units'].indexOf(id))b.classList.add('bg-white');else b.classList.remove('bg-white');});
+}
+readParams(); makeCharts(); reset(); simulateBounce(); loop();
+</script>
+</body>
+</html>
